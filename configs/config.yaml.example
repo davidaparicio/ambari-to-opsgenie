@@ -1,0 +1,16 @@
+---
+
+loglevel: "debug"
+
+opsgenie:
+  key:  "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  heartbeat:
+    name_unencrypted: "xxx.ambari.alert.heartbeat"
+    interval_unencrypted : "5m"
+
+
+ambari:
+  interval_unencrypted: "1m"
+  url_unencrypted: "https://<ambari-server-host>:<port>/api/v1/clusters/<cluste-name>/alerts?fields=*&Alert/maintenance_state=OFF"
+  username_unencrypted: "user"
+  password: "pass"
