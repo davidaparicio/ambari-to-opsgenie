@@ -1,6 +1,6 @@
 ---
 
-loglevel: "debug"
+loglevel_unencrypted: "debug"
 
 opsgenie:
   key:  "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
