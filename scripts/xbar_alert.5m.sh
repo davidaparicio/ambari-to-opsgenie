@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 export GO111MODULE="auto" #"" #go env -w  GO111MODULE=auto
 cd /Users/daparici/code/github.com/davidaparicio/ambari-to-opsgenie
-/Users/daparici/homebrew/opt/go/libexec/bin/go run /Users/daparici/code/github.com/davidaparicio/ambari-to-opsgenie/cmd/xbar/xbar.go
+/Users/daparici/homebrew/opt/go/libexec/bin/go run /Users/daparici/code/github.com/davidaparicio/ambari-to-opsgenie/cmd/xbar/main.go
 
 #  <xbar.title>Check Ambari</xbar.title>
 #  <xbar.version>v1.0</xbar.version>

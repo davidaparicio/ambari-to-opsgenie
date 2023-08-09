@@ -1,45 +1,32 @@
 package main
 
 import (
-	"crypto/tls"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
+	"os"
 	"strconv"
 
-	"github.com/davidaparicio/ambari-to-opsgenie/api/types"
+	"github.com/davidaparicio/ambari-to-opsgenie/internal"
+	"github.com/davidaparicio/ambari-to-opsgenie/util"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
-var v *viper.Viper
-
-func init() {
-	v = viper.New()
-	v.AddConfigPath("/etc/appname/")  // path to look for the config file in
-	v.AddConfigPath("$HOME/.appname") // call multiple times to add many search paths
-	v.AddConfigPath(".")              // optionally look for config in the working directory
-	v.SetConfigName("config")
-	v.SetConfigType("yaml")
-	err := v.ReadInConfig()
-	if err != nil {
-		log.WithError(err).Error("Fatal error config file")
-		return
-	}
-	logLevel, err := log.ParseLevel(v.GetString("agent.loglevel"))
-	if err == nil {
-		log.SetLevel(logLevel)
-	} else {
-		log.SetLevel(log.DebugLevel)
-	}
-}
+const (
+	EXIT_NOCONF_FILE = iota + 1
+	EXIT_UNKNOWN_ERR
+)
 
 func main() {
+	var err error
+	c := new(util.Config)
+	err = util.LoadConfig(c)
+	if err != nil {
+		log.WithError(err).Error("cannot load config")
+		os.Exit(EXIT_NOCONF_FILE)
+	}
+
 	var nbCritical, nbWarning int
-	nbCritical, nbWarning = getNumbers()
+	nbCritical, nbWarning = getNumbers(c)
 	notifyBlinky(nbCritical, nbWarning)
 	printBitbar(nbCritical, nbWarning)
 }
@@ -69,10 +56,10 @@ func printBitbar(nbCritical int, nbWarning int) {
 	//https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
 }
 
-func getNumbers() (nbCritical, nbWarning int) {
+func getNumbers(c *util.Config) (nbCritical, nbWarning int) {
 	nbCritical = 0
 	nbWarning = 0
-	items, err := getAmbariAlert()
+	items, err := internal.GetAmbariAlert(c)
 	if err != nil {
 		log.WithError(err).Error("Fail to get Alert")
 	}
@@ -85,45 +72,6 @@ func getNumbers() (nbCritical, nbWarning int) {
 		}
 	}
 	return nbCritical, nbWarning
-}
-
-func getAmbariAlert() (alert []types.Item, err error) {
-	u, err := url.Parse(v.GetString("ambari.url"))
-	if err != nil {
-		log.WithError(err).Error("parsing url")
-		return
-	}
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{ServerName: u.Host},
-		},
-	}
-	req, err := http.NewRequest(http.MethodGet, v.GetString("ambari.url")+"/api/v1/clusters/prod/alerts?fields=*&Alert/maintenance_state=OFF", nil)
-	if err != nil {
-		return
-	}
-	req.SetBasicAuth(v.GetString("ambari.username"), v.GetString("ambari.password"))
-	resp, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= 299 {
-		err = errors.New(resp.Status)
-		return
-	}
-	//read body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return
-	}
-	responseAlert := types.ResponseAlert{}
-	err = json.Unmarshal(body, &responseAlert)
-	if err != nil {
-		return
-	}
-	alert = responseAlert.Items
-	return
 }
 
 func notifyBlinky(nbCritical, nbWarning int) {

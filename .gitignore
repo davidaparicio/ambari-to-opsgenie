@@ -1,7 +1,7 @@
 secrets
 *.decrypted-*
+config.enc.yaml
 config.yaml
-config_real.yaml
 api/examples/*
 # Created by https://www.toptal.com/developers/gitignore/api/go,vscode
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,vscode
