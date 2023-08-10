@@ -4,20 +4,20 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/davidaparicio/ambari-to-opsgenie/api/types"
 	"github.com/davidaparicio/ambari-to-opsgenie/util"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
 
 	u, err := url.Parse(c.V.GetString("ambari.url_unencrypted"))
 	if err != nil {
-		logrus.WithError(err).Error("parsing url")
+		log.WithError(err).Error("parsing url")
 		return
 	}
 
@@ -47,7 +47,7 @@ func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
 	}
 
 	//read body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}

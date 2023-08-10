@@ -9,10 +9,8 @@ Some extensions have been added like [Blinky](https://getblinky.io/) or [xbar](h
 ## Installation
 
 ```bash
-age-keygen -o secrets/age.key > secrets/public_age.key # Remove the extra lines before the public key, or use 2> instead
+age-keygen -o secrets/age.key > secrets/public_age.key 2>&1
 ```
-
-Edit the function ```LoadConfig``` inside the ```util/config.go``` file with this fresh new public key
 
 ### Configuration
 
@@ -23,6 +21,13 @@ sops --encrypt --age ${SOPS_AGE_RECIPIENTS} configs/config.yaml > configs/config
 ```
 
 ## Usage
+
+First, for in-flight decryption purposes, you need to specify your AGE private key, only, if it's not in ```secrets/age.key``` with this command
+
+```bash
+export SOPS_AGE_KEY_FILE="/TOCHANGETO/Your/Path/Of/Your/AGE/Private.key"
+```
+
 
 For Mac OS, [xbar](https://github.com/matryer/xbar)+[Blinky](https://getblinky.io/) integrations inside the script ```/scripts/xbar_alert.5m.sh```
 

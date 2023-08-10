@@ -12,7 +12,7 @@ func (c Config) ConfigLogger() (err error) {
 	if err == nil {
 		log.SetLevel(logLevel)
 	} else {
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(log.ErrorLevel)
 	}
 	return
 }
