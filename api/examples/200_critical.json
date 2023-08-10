@@ -1,0 +1,29 @@
+{
+  "href": "http://ambari.localhost/api/v1/clusters/dev/alerts?Alert/maintenance_state=OFF&fields=*",
+  "items": [
+    {
+        "href": "http://ambari.localhost/api/v1/clusters/dev/alerts/4001",
+        "Alert": {
+          "cluster_name": "dev",
+          "component_name": "NAMENODE",
+          "definition_id": 13,
+          "definition_name": "namenode_hdfs_blocks_health",
+          "firmness": "HARD",
+          "host_name": "manager0.localhost",
+          "id": 4001,
+          "instance": null,
+          "label": "NameNode Blocks Health",
+          "latest_timestamp": 1690444755854,
+          "maintenance_state": "OFF",
+          "occurrences": 42,
+          "original_timestamp": 1690435515603,
+          "repeat_tolerance": 1,
+          "repeat_tolerance_remaining": 0,
+          "scope": "ANY",
+          "service_name": "HDFS",
+          "state": "CRITICAL",
+          "text": "Total Blocks:[1337], Missing Blocks:[42]"
+        }
+      }
+    ]
+  }

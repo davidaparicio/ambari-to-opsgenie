@@ -18,13 +18,6 @@ type Config struct {
 	AlertClient          *alert.Client
 }
 
-/*var (
-	_, b, _, _ = runtime.Caller(0)
-	basepath   = filepath.Dir(b)
-)*/
-
-// https://github.com/golang/go/blob/457721cd52008146561c80d686ce1bb18285fe99/src/go/types/api.go#L110
-
 // LoadConfig reads configuration from file or environment variables.
 func LoadConfig(c *Config) (err error) {
 	//https://blog.gitguardian.com/a-comprehensive-guide-to-sops/

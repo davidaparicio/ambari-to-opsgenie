@@ -1,0 +1,29 @@
+{
+  "href": "http://ambari.localhost/api/v1/clusters/dev/alerts?Alert/maintenance_state=OFF&fields=*",
+  "items": [
+      {
+        "href": "http://ambari.localhost/api/v1/clusters/dev/alerts/619",
+        "Alert": {
+          "cluster_name": "dev",
+          "component_name": null,
+          "definition_id": 9,
+          "definition_name": "metrics_monitor_process_percent",
+          "firmness": "HARD",
+          "host_name": null,
+          "id": 619,
+          "instance": null,
+          "label": "Percent Metrics Monitors Available",
+          "latest_timestamp": 1686584332014,
+          "maintenance_state": "OFF",
+          "occurrences": 1,
+          "original_timestamp": 1686584332014,
+          "repeat_tolerance": 1,
+          "repeat_tolerance_remaining": 0,
+          "scope": "SERVICE",
+          "service_name": "AMBARI_METRICS",
+          "state": "WARNING",
+          "text": "affected: [1], total: [42]"
+        }
+      }
+    ]
+  }

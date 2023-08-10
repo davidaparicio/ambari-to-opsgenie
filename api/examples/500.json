@@ -1,0 +1,4 @@
+{
+  "status": 500,
+  "message": "org.apache.ambari.server.controller.spi.SystemException: Cluster not found, clusterName=dev"
+}

@@ -1,0 +1,31 @@
+loglevel_unencrypted: debug
+opsgenie:
+    key: ENC[AES256_GCM,data:RRqed/fcRF+lExVe/RVcmziWXVK2Fla1hgEzJ/z8/uJ1MIuh,iv:kktKb3m2zL43Q4VCGoFMNAfT6rIxyOQSrsA7JfpXM6w=,tag:NZCIg1YYO48y0WrtgxXacw==,type:str]
+    heartbeat:
+        name_unencrypted: xxx.heartbeat
+        interval_unencrypted: 5m
+ambari:
+    interval_unencrypted: 1m
+    url_unencrypted: http://localhost:1337/200
+    username_unencrypted: user
+    password: ENC[AES256_GCM,data:AKsoxA==,iv:N6s7s9db5qsJ3xRvjCz6oUDGR3a7gSn6Qi+GMj6y8MY=,tag:JqLSK8vftjTQ1UZSoN7yCg==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age10qrzk97esg3lr6pcrgpk82p3sx3k2dqg477ufgx2l3gg564d7gjq2ux9vy
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBMTmJtcDh1dWxjNWhQZm1W
+            eFVCZ2YrTXdQTEEzNXFPT1phQmZmOHNUOVhFClNzSDU2R0lQZXZLMUlLS1BrSng2
+            cmcxMmVpVWJPTzdtZU5oL25mc0VQdVUKLS0tIFVkellwS0I2ZmJGaW9BbVRTSWlE
+            WjZraUlHVUpIUUl5MytCWjZ4cFFMakkKy/cQA9anpKJ0MmuklalCkX1Ie+h9BEL2
+            LzOqgD/jakMGSz5WnoonmeK9cHgZud1Bn2xhd0Bz5qzWSPfx216Kzw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2023-08-10T09:37:46Z"
+    mac: ENC[AES256_GCM,data:qR+V1qKd9rmiWR1Sr+qSuaG3oEaPY2yH+EPLqzHauH8qwB6MdyZq9kO8cHODyDbwq/yHHbYpv8hRUAI4lUvVtDARaXUH+gpLjBqO35Yb23Do7+Dd9QZ7+wcv5GaUEPrwxGVvLRrHs08XoTq6wHnSEwd/kfniZO8poJtUK5U/Ksw=,iv:Zb31fy5584E0wK0Ktt+qv5DiKHAn8R6NJAmwz8OimL8=,tag:Q6RWEzdn4WjDYuAw5H2MoQ==,type:str]
+    pgp: []
+    unencrypted_suffix: _unencrypted
+    version: 3.7.3
