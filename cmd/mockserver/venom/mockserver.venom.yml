@@ -1,0 +1,98 @@
+version: "2"
+
+name: TestSuite about Ambari mockserver
+
+vars:
+  url: http://localhost:1337/
+
+testcases:
+  - name: Retrieve a CRITICAL alert
+    steps:
+      - type: http
+        method: GET
+        url: "{{.url}}/200/critical"
+        timeout: 10
+        retry: 1
+        delay: 2
+        assertions:
+          - and:
+            - result.statuscode ShouldEqual 200
+            - result.timeseconds ShouldBeLessThan 5
+            - result.bodyjson ShouldContainKey items
+            - result.bodyjson ShouldContainKey component_name
+            - result.bodyjson ShouldContainKey state
+            - result.bodyjson ShouldContainKey text
+            - result.bodyjson.username ShouldEqual {{.username}}
+            - result.bodyjson.items.__type__ ShouldEqual Array
+            - result.bodyjson.items.__len__ ShouldEqual 1
+            - result.bodyjson.items.results0.Alert.component_name ShouldEqual "NAMENODE"
+            - result.bodyjson.items.results0.Alert.state ShouldEqual "CRITICAL"
+            - result.bodyjson.items.results0.Alert.text ShouldEqual "Total Blocks:[1337], Missing Blocks:[42]"
+  - name: Retrieve a WARNING alert
+    steps:
+      - type: http
+        method: GET
+        url: "{{.url}}/200/warning"
+        timeout: 10
+        retry: 1
+        delay: 2
+        assertions:
+          - and:
+            - result.statuscode ShouldEqual 200
+            - result.timeseconds ShouldBeLessThan 5
+            - result.bodyjson ShouldContainKey items
+            - result.bodyjson ShouldContainKey service_name
+            - result.bodyjson ShouldContainKey state
+            - result.bodyjson ShouldContainKey text
+            - result.bodyjson.username ShouldEqual {{.username}}
+            - result.bodyjson.items.__type__ ShouldEqual Array
+            - result.bodyjson.items.__len__ ShouldEqual 1
+            - result.bodyjson.items.results0.Alert.service_name ShouldEqual "AMBARI_METRICS"
+            - result.bodyjson.items.results0.Alert.state ShouldEqual "WARNING"
+            - result.bodyjson.items.results0.Alert.text ShouldEqual "affected: [1], total: [42]"
+  - name: Retrieve a OK alert
+    steps:
+      - type: http
+        method: GET
+        url: "{{.url}}/200"
+        timeout: 10
+        retry: 1
+        delay: 2
+        assertions:
+          - and:
+            - result.statuscode ShouldEqual 200
+            - result.timeseconds ShouldBeLessThan 5
+            - result.bodyjson ShouldContainKey items
+            - result.bodyjson ShouldContainKey component_name
+            - result.bodyjson ShouldContainKey state
+            - result.bodyjson ShouldContainKey text
+            - result.bodyjson.username ShouldEqual {{.username}}
+            - result.bodyjson.items.__type__ ShouldEqual Array
+            - result.bodyjson.items.__len__ ShouldEqual 1
+            - result.bodyjson.items.results0.Alert.component_name ShouldEqual "NAMENODE"
+            - result.bodyjson.items.results0.Alert.state ShouldEqual "OK"
+            - result.bodyjson.items.results0.Alert.text ShouldEqual "Total Blocks:[1337], Missing Blocks:[0]"
+  - name: Retrieve 403
+    steps:
+      - type: http
+        method: GET
+        url: "{{.url}}/403"
+        timeout: 10
+        retry: 1
+        delay: 2
+        assertions:
+          - and:
+            - result.statuscode ShouldEqual 403
+            - result.timeseconds ShouldBeLessThan 5
+  - name: Retrieve 500
+    steps:
+      - type: http
+        method: GET
+        url: "{{.url}}/500"
+        timeout: 10
+        retry: 1
+        delay: 2
+        assertions:
+          - and:
+            - result.statuscode ShouldEqual 500
+            - result.timeseconds ShouldBeLessThan 5

@@ -25,6 +25,8 @@ func main() {
 		os.Exit(EXIT_NOCONF_FILE)
 	}
 
+	log.Debug(internal.CurrentVersion())
+
 	var nbCritical, nbWarning int
 	nbCritical, nbWarning = getNumbers(c)
 	notifyBlinky(nbCritical, nbWarning)

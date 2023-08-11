@@ -28,6 +28,8 @@ func main() {
 		os.Exit(EXIT_NOCONF_FILE)
 	}
 
+	log.Info(internal.CurrentVersion())
+
 	go internal.SendHearbeat(c)
 
 	c.AmbariOpgenieMapping = make(map[int]string)

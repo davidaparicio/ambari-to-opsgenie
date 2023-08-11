@@ -1,5 +1,3 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
 before:
   hooks:
     # You may remove this if you don't use go modules.
@@ -21,13 +19,6 @@ builds:
 archives:
   # To avoid archives format
   - format: binary
-# Archives DISABLED
-#   - replacements:
-#       darwin: Darwin
-#       linux: Linux
-#       windows: Windows
-#       386: i386
-#       amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
