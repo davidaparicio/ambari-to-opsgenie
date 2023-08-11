@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -29,10 +30,12 @@ func main() {
 	}
 
 	log.Info(internal.CurrentVersion())
-
-	go internal.SendHearbeat(c)
-
 	c.AmbariOpgenieMapping = make(map[int]string)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go internal.SendHearbeat(ctx, c)
+
 	c.AlertClient, err = alert.NewClient(&client.Config{
 		ApiKey:         c.V.GetString("opsgenie.key"),
 		OpsGenieAPIURL: client.API_URL_EU,
@@ -46,35 +49,46 @@ func main() {
 	wait, _ := time.ParseDuration(c.V.GetString("ambari.interval_unencrypted"))
 	ticker := time.NewTicker(wait)
 
-	for range ticker.C {
-		items, err := internal.GetAmbariAlert(c)
-		if err != nil {
-			log.WithError(err).Error("Fail to get Alert")
-			continue
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			log.Debug("Stopping the Ambari-to-Opsgenie CLI..")
+			return
+		case <-ticker.C:
+			items, err := internal.GetAmbariAlert(ctx, c)
 
-		for _, item := range items {
-			opgenieID := c.AmbariOpgenieMapping[item.Alert.Id]
-
-			if item.Alert.State == "OK" {
-				if opgenieID == "" {
-					continue
-				} else {
-					if err = internal.CloseAlert(item.Alert, c); err != nil {
-						log.WithError(err).Error("Fail to close Alert")
-					}
-				}
+			if err != nil {
+				log.WithError(err).Error("Fail to get Alert")
+				continue
 			}
 
-			if opgenieID == "" {
-				if err = internal.CreateAlert(item.Alert, c); err != nil {
-					log.WithError(err).Error("Fail to send Alert")
-				}
-			} else {
+			for _, item := range items {
+				//Check if the alert have been already created in Opsgenie
+				opgenieID := c.AmbariOpgenieMapping[item.Alert.Id]
 
-				//if err = checkAndUpdateAlert(item.Alert); err != nil {
-				if err = internal.CommentAlert(item.Alert, c); err != nil {
-					log.WithError(err).Error("Fail to update Alert")
+				if item.Alert.State == "OK" {
+					if opgenieID == "" {
+						//Nothing to do
+						continue
+					} else {
+						//Closing the Opsgenie alert, because it's fixed
+						if err = internal.CloseAlert(item.Alert, c); err != nil {
+							log.WithError(err).Error("Fail to close Alert")
+						}
+					}
+				}
+
+				//item.Alert.State == "CRITICAL" or "WARNING"
+				if opgenieID == "" {
+					if err = internal.CreateAlert(item.Alert, c); err != nil {
+						log.WithError(err).Error("Fail to send Alert")
+					}
+				} else {
+					//Update the Opsgenie alert with a comment
+					if err = internal.CommentAlert(item.Alert, c); err != nil {
+						log.WithError(err).Error("Fail to comment Alert")
+					}
 				}
 			}
 		}

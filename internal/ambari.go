@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -13,7 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
+// GetAmbariAlert calls the Ambari API to retrieve all alerts of a Hadoop cluster
+func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, err error) {
 
 	u, err := url.Parse(c.V.GetString("ambari.url_unencrypted"))
 	if err != nil {
@@ -27,8 +29,9 @@ func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
 		},
 	}
 
-	req, err := http.NewRequest(http.MethodGet, c.V.GetString("ambari.url_unencrypted"), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.V.GetString("ambari.url_unencrypted"), nil)
 	if err != nil {
+		log.WithError(err).Error("creating the HTTP NewRequest")
 		return
 	}
 
@@ -36,9 +39,9 @@ func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.WithError(err).Error("sending the HTTP request")
 		return
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 299 {
@@ -49,6 +52,7 @@ func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
 	//read body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.WithError(err).Error("reading the HTTP body")
 		return
 	}
 
@@ -56,11 +60,10 @@ func GetAmbariAlert(c *util.Config) (alert []types.Item, err error) {
 
 	err = json.Unmarshal(body, &responseAlert)
 	if err != nil {
+		log.WithError(err).Error("unmarshaling the JSON body")
 		return
 	}
 
 	alert = responseAlert.Items
-
 	return
-
 }

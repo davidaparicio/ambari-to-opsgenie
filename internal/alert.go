@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// CommentAlert comments an Opsgenie alert, using the Opsgenie Go SDK
 func CommentAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	commentResult, err := c.AlertClient.AddNote(context.Background(), &alert.AddNoteRequest{
 		IdentifierType:  alert.ALERTID,
@@ -32,6 +33,7 @@ func CommentAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	return
 }
 
+// CloseAlert closes an Opsgenie alert and remove it from the AmbariOpgenieMapping map
 func CloseAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	closeResult, err := c.AlertClient.Close(context.Background(), &alert.CloseAlertRequest{
 		IdentifierType:  alert.ALERTID,
@@ -57,6 +59,7 @@ func CloseAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	return
 }
 
+// CreateAlert creates a new Opsgenie alert and save it into the AmbariOpgenieMapping map
 func CreateAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 
 	var priority alert.Priority

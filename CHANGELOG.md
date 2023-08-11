@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Refactoring and fit to the [Standard Go Project Layout](https://github.com/golang-standards/project-layout)
 - Use with wisdom, the best data structure for the [config](https://david-yappeter.medium.com/golang-pass-by-value-vs-pass-by-reference-e48aac8b2716)[²](https://go101.org/article/pointer.html)
+- Robustness with the usage of Go context
 
 ## [0.0.4] - 2023-07-30
 ### Changed

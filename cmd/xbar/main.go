@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -26,9 +27,11 @@ func main() {
 	}
 
 	log.Debug(internal.CurrentVersion())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	var nbCritical, nbWarning int
-	nbCritical, nbWarning = getNumbers(c)
+	nbCritical, nbWarning = getNumbers(ctx, c)
 	notifyBlinky(nbCritical, nbWarning)
 	printBitbar(nbCritical, nbWarning)
 }
@@ -58,10 +61,10 @@ func printBitbar(nbCritical int, nbWarning int) {
 	//https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
 }
 
-func getNumbers(c *util.Config) (nbCritical, nbWarning int) {
+func getNumbers(ctx context.Context, c *util.Config) (nbCritical, nbWarning int) {
 	nbCritical = 0
 	nbWarning = 0
-	items, err := internal.GetAmbariAlert(c)
+	items, err := internal.GetAmbariAlert(ctx, c)
 	if err != nil {
 		log.WithError(err).Error("Fail to get Alert")
 	}

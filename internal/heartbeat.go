@@ -10,9 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// sendHearbeat sends a heartbeat every x minutes
-// first you need to create a hearbeat in opsgenie and must be enabled
-func SendHearbeat(c *util.Config) {
+// SendHearbeat sends a heartbeat every x minutes.
+// First you need to create a hearbeat in opsgenie and must be enabled
+func SendHearbeat(ctx context.Context, c *util.Config) {
 
 	HeartbeatClient, err := heartbeat.NewClient(&client.Config{
 		ApiKey:         c.V.GetString("opsgenie.key"),
@@ -27,18 +27,22 @@ func SendHearbeat(c *util.Config) {
 	wait, _ := time.ParseDuration(c.V.GetString("opsgenie.heartbeat.interval_unencrypted"))
 	ticker := time.NewTicker(wait)
 
-	for range ticker.C {
-		log.Debug("sending Ping...")
-		pingResult, err := HeartbeatClient.Ping(context.Background(), c.V.GetString("opsgenie.heartbeat.name_unencrypted"))
-		if err != nil {
-			log.WithError(err).Error("Fail to ping")
-			continue
+	for {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		case <-ticker.C:
+			log.Debug("sending Ping...")
+			pingResult, err := HeartbeatClient.Ping(context.Background(), c.V.GetString("opsgenie.heartbeat.name_unencrypted"))
+			if err != nil {
+				log.WithError(err).Error("Fail to ping")
+				continue
+			}
+			log.WithFields(log.Fields{
+				"Message":      pingResult.Message,
+				"ResponseTime": pingResult.ResponseTime,
+			}).Debug("Pong received")
 		}
-		log.WithFields(log.Fields{
-			"Message":      pingResult.Message,
-			"ResponseTime": pingResult.ResponseTime,
-		}).Debug("Pong received")
-
 	}
-
 }
