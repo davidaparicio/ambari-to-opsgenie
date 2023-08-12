@@ -9,7 +9,7 @@ import (
 
 	"github.com/davidaparicio/ambari-to-opsgenie/internal"
 	"github.com/davidaparicio/ambari-to-opsgenie/util"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -17,16 +17,24 @@ const (
 	EXIT_UNKNOWN_ERR
 )
 
+var c *util.Config
+var l *logrus.Logger
+
 func main() {
 	var err error
-	c := new(util.Config)
+
+	c = new(util.Config)
 	err = util.LoadConfig(c)
 	if err != nil {
-		log.WithError(err).Error("cannot load config")
+		l.WithError(err).Error("cannot load config")
 		os.Exit(EXIT_NOCONF_FILE)
 	}
 
-	log.Debug(internal.CurrentVersion())
+	l = logrus.New()
+	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
+	l.SetLevel(logrus.DebugLevel)
+
+	l.Debug(internal.CurrentVersion())
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -66,7 +74,7 @@ func getNumbers(ctx context.Context, c *util.Config) (nbCritical, nbWarning int)
 	nbWarning = 0
 	items, err := internal.GetAmbariAlert(ctx, c)
 	if err != nil {
-		log.WithError(err).Error("Fail to get Alert")
+		l.WithError(err).Error("Fail to get Alert")
 	}
 	for _, item := range items {
 		if item.Alert.State == "WARNING" {
@@ -83,18 +91,18 @@ func notifyBlinky(nbCritical, nbWarning int) {
 	if nbCritical != 0 {
 		res, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/5b0adf41-a91a-4e96-9265-f4081e0c30f4")
 		if err != nil {
-			log.WithError(err).Error("Fail to call Blinky critical webhook")
+			l.WithError(err).Error("Fail to call Blinky critical webhook")
 		} else {
-			log.Info("Blinky webhook critical called\n")
-			log.Infof("status code: %d\n", res.StatusCode)
+			l.Info("Blinky webhook critical called\n")
+			l.Infof("status code: %d\n", res.StatusCode)
 		}
 	} else if nbWarning != 0 {
 		res, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/c919e0fa-cbf2-4948-a111-a5dee3192d19")
 		if err != nil {
-			log.WithError(err).Error("Fail to call Blinky warning webhook")
+			l.WithError(err).Error("Fail to call Blinky warning webhook")
 		} else {
-			log.Info("Blinky webhook warning called\n")
-			log.Infof("status code: %d\n", res.StatusCode)
+			l.Info("Blinky webhook warning called\n")
+			l.Infof("status code: %d\n", res.StatusCode)
 		}
 	}
 	/* FOR DEBUG else {
