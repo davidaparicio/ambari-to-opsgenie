@@ -2,120 +2,67 @@ package main
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
-func check200(w http.ResponseWriter, r *http.Request) {
-	log.Printf("200 req %s %s\n", r.Host, r.URL.Path)
-	jsonFile, err := os.Open("api/examples/200.json")
-	defer func() {
-		if err := jsonFile.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
-	if err != nil {
-		log.Println(err)
-	}
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		log.Println(err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(byteValue)
+const (
+	CONTENT_TYPE = "Content-Type"
+	APPLICA_JSON = "application/json"
+	JSON_PATH    = "api/examples/"
+)
+
+var l *logrus.Logger
+
+type Handler struct {
+	StatusCode int
+	FilePath   string
 }
 
-func check200critical(w http.ResponseWriter, r *http.Request) {
-	log.Printf("200 critical called")
-	jsonFile, err := os.Open("api/examples/200_critical.json")
-	defer func() {
-		if err := jsonFile.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
-	if err != nil {
-		log.Println(err)
+func jsonHandler(statusCode int, filePath string) Handler {
+	return Handler{
+		StatusCode: statusCode,
+		FilePath:   filePath,
 	}
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		log.Println(err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(byteValue)
 }
 
-func check200warning(w http.ResponseWriter, r *http.Request) {
-	log.Printf("200 warning called")
-	jsonFile, err := os.Open("api/examples/200_warning.json")
-	defer func() {
-		if err := jsonFile.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
-	if err != nil {
-		log.Println(err)
-	}
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		log.Println(err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(byteValue)
-}
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	l.Debugf("%s called", h.FilePath)
+	jsonFile, err := os.Open(JSON_PATH + h.FilePath + ".json")
 
-func check403(w http.ResponseWriter, r *http.Request) {
-	log.Println("403 called")
-	jsonFile, err := os.Open("api/examples/403.json")
-	defer func() {
-		if err := jsonFile.Close(); err != nil {
-			log.Println(err)
-		}
-	}()
 	if err != nil {
-		log.Println(err)
+		l.WithError(err).Error("cannot open json file")
 	}
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		log.Println(err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusForbidden)
-	w.Write(byteValue)
-}
 
-func check500(w http.ResponseWriter, r *http.Request) {
-	log.Println("500 called")
-	jsonFile, err := os.Open("api/examples/500.json")
 	defer func() {
 		if err := jsonFile.Close(); err != nil {
-			log.Println(err)
+			l.WithError(err).Error("cannot close json file")
 		}
 	}()
-	if err != nil {
-		log.Println(err)
-	}
+
 	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
-		log.Println(err)
+		l.WithError(err).Error("cannot json io.ReadAll")
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set(CONTENT_TYPE, APPLICA_JSON)
+	w.WriteHeader(h.StatusCode)
 	w.Write(byteValue)
 }
 
 func main() {
 	r := http.NewServeMux()
+	l = logrus.New()
+	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
+	l.SetLevel(logrus.DebugLevel)
 
-	r.HandleFunc("/403", check403)
-	r.HandleFunc("/500", check500)
-	r.HandleFunc("/200", check200)
-	r.HandleFunc("/200/critical", check200critical)
-	r.HandleFunc("/200/warning", check200warning)
+	r.Handle("/200", jsonHandler(200, "200"))
+	r.Handle("/200/critical", jsonHandler(200, "200_critical"))
+	r.Handle("/200/warning", jsonHandler(200, "200_warning"))
+	r.Handle("/403", jsonHandler(403, "403"))
+	r.Handle("/500", jsonHandler(500, "500"))
 
 	srv := &http.Server{
 		Addr:              ":1337",
@@ -127,12 +74,12 @@ func main() {
 		//TLSConfig: tlsConfig,
 	}
 
-	log.Println("Server running on port 1337")
+	l.Debug("Server running on port 1337")
 	if err := srv.ListenAndServe(); err != nil {
 		if err == http.ErrServerClosed {
-			log.Printf("Server stopping...")
+			l.Debug("Server stopping...")
 		} else {
-			log.Fatal(err)
+			l.WithError(err).Fatal("Server encontered an unknow error")
 		}
 	}
 }
