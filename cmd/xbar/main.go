@@ -82,29 +82,38 @@ func getNumbers(ctx context.Context, c *util.Config) (nbCritical, nbWarning int)
 
 func notifyBlinky(nbCritical, nbWarning int) {
 	if nbCritical != 0 {
-		res, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/5b0adf41-a91a-4e96-9265-f4081e0c30f4")
+		resp, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/5b0adf41-a91a-4e96-9265-f4081e0c30f4")
 		if err != nil {
 			c.L.WithError(err).Error("Fail to call Blinky critical webhook")
 		} else {
 			c.L.Info("Blinky webhook critical called\n")
-			c.L.Infof("status code: %d\n", res.StatusCode)
+			c.L.Infof("status code: %d\n", resp.StatusCode)
 		}
+		defer closeResponse(resp)
 	} else if nbWarning != 0 {
-		res, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/c919e0fa-cbf2-4948-a111-a5dee3192d19")
+		resp, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/c919e0fa-cbf2-4948-a111-a5dee3192d19")
 		if err != nil {
 			c.L.WithError(err).Error("Fail to call Blinky warning webhook")
 		} else {
 			c.L.Info("Blinky webhook warning called\n")
-			c.L.Infof("status code: %d\n", res.StatusCode)
+			c.L.Infof("status code: %d\n", resp.StatusCode)
 		}
+		defer closeResponse(resp)
 	}
 	/* FOR DEBUG else {
 		res, err := http.Get("https://app.getblinky.io/api/v1/ingest/webhook/af2f8552-58a7-4a04-a43b-844887dcef8e")
 		if err != nil {
-			logrus.WithError(err).Error("Fail to call Blinky OK webhook")
+			c.L.WithError(err).Error("Fail to call Blinky OK webhook")
 		} else {
-			logrus.Info("Blinky webhook OK called\n")
-			logrus.Infof("status code: %d\n", res.StatusCode)
+			c.L.Info("Blinky webhook OK called\n")
+			c.L.Infof("status code: %d\n", res.StatusCode)
 		}
+		defer closeResponse(resp)
 	} */
+}
+
+func closeResponse(resp *http.Response) {
+	if err := resp.Body.Close(); err != nil {
+		c.L.WithError(err).Error("Fail to close http.NewRequest.body")
+	}
 }
