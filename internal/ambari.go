@@ -25,7 +25,7 @@ func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, er
 
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{ServerName: u.Host},
+			TLSClientConfig: &tls.Config{ServerName: u.Host, MinVersion: tls.VersionTLS12},
 		},
 	}
 
