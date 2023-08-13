@@ -7,7 +7,7 @@ import (
 	"github.com/davidaparicio/ambari-to-opsgenie/util"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/heartbeat"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // SendHearbeat sends a heartbeat every x minutes.
@@ -20,7 +20,7 @@ func SendHearbeat(ctx context.Context, c *util.Config) {
 	})
 
 	if err != nil {
-		log.WithError(err).Error("Fail to Create heartbeat Client")
+		c.L.WithError(err).Error("Fail to Create heartbeat Client")
 		return
 	}
 
@@ -33,13 +33,13 @@ func SendHearbeat(ctx context.Context, c *util.Config) {
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			log.Debug("sending Ping...")
+			c.L.Debug("sending Ping...")
 			pingResult, err := HeartbeatClient.Ping(context.Background(), c.V.GetString("opsgenie.heartbeat.name_unencrypted"))
 			if err != nil {
-				log.WithError(err).Error("Fail to ping")
+				c.L.WithError(err).Error("Fail to ping")
 				continue
 			}
-			log.WithFields(log.Fields{
+			c.L.WithFields(logrus.Fields{
 				"Message":      pingResult.Message,
 				"ResponseTime": pingResult.ResponseTime,
 			}).Debug("Pong received")

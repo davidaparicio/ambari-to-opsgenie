@@ -7,7 +7,6 @@ import (
 	"github.com/davidaparicio/ambari-to-opsgenie/api/types"
 	"github.com/davidaparicio/ambari-to-opsgenie/util"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
-	log "github.com/sirupsen/logrus"
 )
 
 // CommentAlert comments an Opsgenie alert, using the Opsgenie Go SDK.
@@ -19,14 +18,14 @@ func CommentAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	})
 
 	if err != nil {
-		log.WithError(err).Error("Fail to comment Alert")
+		c.L.WithError(err).Error("Fail to comment Alert")
 		return
 	}
 
 	status, err := commentResult.RetrieveStatus(context.Background())
 
 	if !status.IsSuccess {
-		log.Debug(status.Status)
+		c.L.Debug(status.Status)
 		return
 	}
 
@@ -41,14 +40,14 @@ func CloseAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	})
 
 	if err != nil {
-		log.WithError(err).Error("Fail to Close Alert")
+		c.L.WithError(err).Error("Fail to Close Alert")
 		return
 	}
 
 	status, err := closeResult.RetrieveStatus(context.Background())
 
 	if !status.IsSuccess {
-		log.Debug(status.Status)
+		c.L.Debug(status.Status)
 		if status.Status != "Alert is already closed." {
 			return
 		}
@@ -87,14 +86,14 @@ func CreateAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 	})
 
 	if err != nil {
-		log.WithError(err).Error("Fail to Create Alert")
+		c.L.WithError(err).Error("Fail to Create Alert")
 		return
 	}
 
 	createStatus, err := createResult.RetrieveStatus(context.Background())
 
 	if !createStatus.IsSuccess {
-		log.Debug(createStatus.Status)
+		c.L.Debug(createStatus.Status)
 		return
 	}
 
