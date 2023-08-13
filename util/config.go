@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 
 	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
@@ -22,7 +23,13 @@ const ageKeyFile = "secrets/age.key"
 
 // LoadConfig reads encrypted configuration from file or environment variables.
 func LoadConfig(c *Config) (err error) {
-	//https://blog.gitguardian.com/a-comprehensive-guide-to-sops/
+	// Set logrus logger, before using it
+	if err = c.ConfigLogger(); err != nil {
+		fmt.Printf("[ERRO] to configure the logrus logger...\n%v\n", err)
+	}
+
+	// SOPS/AGE preparation, check SOPS_AGE_KEY_FILE OS variable
+	// https://blog.gitguardian.com/a-comprehensive-guide-to-sops/
 	if _, ok := os.LookupEnv("SOPS_AGE_KEY_FILE"); !ok {
 		// Set the hardcoded constant of ageKeyFile
 		err = os.Setenv("SOPS_AGE_KEY_FILE", ageKeyFile)
@@ -31,12 +38,14 @@ func LoadConfig(c *Config) (err error) {
 		}
 	}
 
-	//Decrypt, like https://github.com/dailymotion-oss/octopilot/blob/280196f325b8051315e40170ab786355ea856e14/update/sops/sops_test.go
+	// Decrypt using AGE key
+	// like https://github.com/dailymotion-oss/octopilot/blob/280196f325b8051315e40170ab786355ea856e14/update/sops/sops_test.go
 	actualCleartextData, err := decrypt.File("configs/config.enc.yaml", "yaml")
 	if err != nil {
 		c.L.WithError(err).Error("Decrypt config file fail")
 	}
 
+	// Read decrypted configuration with Viper
 	c.V = viper.New()
 	c.V.SetConfigType("yaml")
 	if err = c.V.ReadConfig(bytes.NewBuffer(actualCleartextData)); err != nil {
@@ -46,8 +55,13 @@ func LoadConfig(c *Config) (err error) {
 			c.L.WithError(err).Error("Config file found but viper fails to ReadConfig")
 		}
 	}
-	/*if err = c.ConfigLogger(); err != nil {
-		fmt.Printf("[ERRO] to configure the logrus logger...\n%v\n", err)
-	}*/
+
+	// Configure the correct logrus level
+	logLevel, err := logrus.ParseLevel(c.V.GetString("loglevel_unencrypted"))
+	if err == nil {
+		c.L.SetLevel(logLevel)
+	} else {
+		c.L.SetLevel(logrus.DebugLevel)
+	}
 	return
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/davidaparicio/ambari-to-opsgenie/util"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
 	"github.com/opsgenie/opsgenie-go-sdk-v2/client"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -17,24 +16,18 @@ const (
 	EXIT_UNKNOWN_ERR
 )
 
-var l *logrus.Logger
-
 func main() {
 	var err error
 
 	c := new(util.Config)
 	err = util.LoadConfig(c)
 
-	l = logrus.New()
-	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
-	l.SetLevel(logrus.DebugLevel)
-
 	if err != nil {
-		l.WithError(err).Error("cannot load config")
+		c.L.WithError(err).Error("cannot load config")
 		os.Exit(EXIT_NOCONF_FILE)
 	}
 
-	l.Info(internal.CurrentVersion())
+	c.L.Info(internal.CurrentVersion())
 	c.AmbariOpgenieMapping = make(map[int]string)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -47,7 +40,7 @@ func main() {
 	})
 
 	if err != nil {
-		l.WithError(err).Error("Fail to Create Client")
+		c.L.WithError(err).Error("Fail to Create Client")
 		return
 	}
 
@@ -58,13 +51,13 @@ func main() {
 		select {
 		case <-ctx.Done():
 			ticker.Stop()
-			l.Debug("Stopping the Ambari-to-Opsgenie CLI..")
+			c.L.Debug("Stopping the Ambari-to-Opsgenie CLI..")
 			return
 		case <-ticker.C:
 			items, err := internal.GetAmbariAlert(ctx, c)
 
 			if err != nil {
-				l.WithError(err).Error("Fail to get Alert")
+				c.L.WithError(err).Error("Fail to get Alert")
 				continue
 			}
 
@@ -79,7 +72,7 @@ func main() {
 					} else {
 						//Closing the Opsgenie alert, because it's fixed
 						if err = internal.CloseAlert(item.Alert, c); err != nil {
-							l.WithError(err).Error("Fail to close Alert")
+							c.L.WithError(err).Error("Fail to close Alert")
 						}
 					}
 				}
@@ -87,12 +80,12 @@ func main() {
 				//item.Alert.State == "CRITICAL" or "WARNING"
 				if opgenieID == "" {
 					if err = internal.CreateAlert(item.Alert, c); err != nil {
-						l.WithError(err).Error("Fail to send Alert")
+						c.L.WithError(err).Error("Fail to send Alert")
 					}
 				} else {
 					//Update the Opsgenie alert with a comment
 					if err = internal.CommentAlert(item.Alert, c); err != nil {
-						l.WithError(err).Error("Fail to comment Alert")
+						c.L.WithError(err).Error("Fail to comment Alert")
 					}
 				}
 			}
