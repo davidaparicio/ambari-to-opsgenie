@@ -2,7 +2,7 @@ package util
 
 import "github.com/sirupsen/logrus"
 
-// ConfigLogger configures the Logrus logger (timestamp+loglevel)
+// ConfigLogger configures the Logrus logger (timestamp+loglevel).
 func (c *Config) ConfigLogger() (err error) {
 	c.L = logrus.New()
 	// To get a timestamp format like DEBU[2022-01-11T23:15:56+01:00] Debug message

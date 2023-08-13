@@ -13,7 +13,7 @@ import (
 
 const (
 	EXIT_NOCONF_FILE = iota + 1
-	EXIT_UNKNOWN_ERR
+	//EXIT_UNKNOWN_ERR
 )
 
 func main() {

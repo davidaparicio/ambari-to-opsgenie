@@ -1,19 +1,19 @@
 package types
 
 type (
-	//ResponseAlert definition on JSON
+	// ResponseAlert definition on JSON
 	ResponseAlert struct {
 		Href  string `json:"href"`
 		Items []Item `json:"items"`
 	}
 
-	//Item definition on JSON.ResponseAlert
+	// Item definition on JSON.ResponseAlert
 	Item struct {
 		Href  string `json:"href"`
 		Alert Alert  `json:"Alert"`
 	}
 
-	//Alert definition on JSON.ResponseAlert.Item
+	// Alert definition on JSON.ResponseAlert.Item
 	Alert struct {
 		ClusterName   string `json:"cluster_name" mapstructure:"topic_prefix"`
 		ComponentName string `json:"component_name" mapstructure:"component_name"`

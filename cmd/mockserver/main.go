@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -30,7 +31,7 @@ func jsonHandler(statusCode int, filePath string) Handler {
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l.Debugf("%s called", h.FilePath)
+	l.Debugf("%s called by %s", h.FilePath, r.Host)
 	jsonFile, err := os.Open(JSON_PATH + h.FilePath + ".json")
 
 	if err != nil {
@@ -49,7 +50,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set(CONTENT_TYPE, APPLICA_JSON)
 	w.WriteHeader(h.StatusCode)
-	w.Write(byteValue)
+	if _, err := w.Write(byteValue); err != nil {
+		l.WithError(err).Fatal("ServeHTTP error during w.Write(JSONbytes)")
+	}
 }
 
 func main() {
@@ -76,10 +79,10 @@ func main() {
 
 	l.Debug("Server running on port 1337")
 	if err := srv.ListenAndServe(); err != nil {
-		if err == http.ErrServerClosed {
+		if errors.Is(err, http.ErrServerClosed) {
 			l.Debug("Server stopping...")
 		} else {
-			l.WithError(err).Fatal("Server encontered an unknow error")
+			l.WithError(err).Fatal("Server encontered an unknown error")
 		}
 	}
 }
