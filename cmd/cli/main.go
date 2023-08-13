@@ -70,7 +70,7 @@ func main() {
 						continue
 					} else {
 						//Closing the Opsgenie alert, because it's fixed
-						if err = internal.CloseAlert(item.Alert, c, ctx); err != nil {
+						if err = internal.CloseAlert(ctx, item.Alert, c); err != nil {
 							c.L.WithError(err).Error("Fail to close Alert")
 						}
 					}
@@ -78,12 +78,12 @@ func main() {
 
 				//item.Alert.State == "CRITICAL" or "WARNING"
 				if opgenieID == "" {
-					if err = internal.CreateAlert(item.Alert, c, ctx); err != nil {
+					if err = internal.CreateAlert(ctx, item.Alert, c); err != nil {
 						c.L.WithError(err).Error("Fail to send Alert")
 					}
 				} else {
 					//Update the Opsgenie alert with a comment
-					if err = internal.CommentAlert(item.Alert, c, ctx); err != nil {
+					if err = internal.CommentAlert(ctx, item.Alert, c); err != nil {
 						c.L.WithError(err).Error("Fail to comment Alert")
 					}
 				}

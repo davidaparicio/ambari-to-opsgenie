@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/davidaparicio/ambari-to-opsgenie/api/types"
@@ -10,8 +11,11 @@ import (
 	"github.com/opsgenie/opsgenie-go-sdk-v2/alert"
 )
 
+var ErrOperationNotPermit = errors.New("can't create an Opsgenie alert for OK status")
+var ErrOperationUnknown = errors.New("can't create an Opsgenie alert for an unknown status")
+
 // CommentAlert comments an Opsgenie alert, using the Opsgenie Go SDK.
-func CommentAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (err error) {
+func CommentAlert(ctx context.Context, ambariAlert types.Alert, c *util.Config) (err error) {
 	ctx, cancelled := context.WithCancel(ctx)
 	defer cancelled()
 	commentResult, err := c.AlertClient.AddNote(ctx, &alert.AddNoteRequest{
@@ -35,8 +39,8 @@ func CommentAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) 
 	return nil
 }
 
-// CloseAlert closes an Opsgenie alert and remove it from the AmbariOpgenieMapping map.
-func CloseAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (err error) {
+// CloseAlert closes an Opsgenie alert and remove it from the AmbariOpgenieMapping map, using the Opsgenie Go SDK.
+func CloseAlert(ctx context.Context, ambariAlert types.Alert, c *util.Config) (err error) {
 	ctx, cancelled := context.WithCancel(ctx)
 	defer cancelled()
 	closeResult, err := c.AlertClient.Close(ctx, &alert.CloseAlertRequest{
@@ -64,8 +68,8 @@ func CloseAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (e
 	return nil
 }
 
-// CreateAlert creates a new Opsgenie alert and save it into the AmbariOpgenieMapping map.
-func CreateAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (err error) {
+// CreateAlert creates a new Opsgenie alert and save it into the AmbariOpgenieMapping map, using the Opsgenie Go SDK.
+func CreateAlert(ctx context.Context, ambariAlert types.Alert, c *util.Config) (err error) {
 
 	var priority alert.Priority
 	switch ambariAlert.State {
@@ -74,9 +78,9 @@ func CreateAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (
 	case "CRITICAL":
 		priority = alert.P3
 	case "OK":
-		return errors.New("can't create an Opsgenie alert for OK status")
+		return OperationNotPossibleError("OK to close")
 	default:
-		return errors.New("can't create an Opsgenie alert for an unknown status")
+		return OperationUnknownError("CreateAlert(switch case = default)")
 	}
 
 	ctx, cancelled := context.WithCancel(ctx)
@@ -110,4 +114,12 @@ func CreateAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (
 	c.AmbariOpgenieMapping[ambariAlert.Id] = createStatus.AlertID
 
 	return nil
+}
+
+func OperationNotPossibleError(op string) error {
+	return fmt.Errorf("OperationNotPermit %w : %s", ErrOperationNotPermit, op)
+}
+
+func OperationUnknownError(op string) error {
+	return fmt.Errorf("OperationUnknown %w : %s", ErrOperationUnknown, op)
 }

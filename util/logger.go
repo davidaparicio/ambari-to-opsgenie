@@ -9,9 +9,9 @@ func (c *Config) ConfigLogger() {
 	c.L.SetFormatter(&logrus.TextFormatter{
 		TimestampFormat: "2006-01-02T15:04:05-07:00",
 		FullTimestamp:   true,
-		//ForceColors:     true,
-		//DisableColors:   false,
+		// ForceColors:     true,
+		// DisableColors:   false,
 	})
-	//Set logrus show line number
-	//c.L.SetReportCaller(true)
+	// Set logrus show line number
+	// c.L.SetReportCaller(true)
 }

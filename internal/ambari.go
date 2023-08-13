@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -14,6 +15,8 @@ import (
 )
 
 const ERROR_STATUS_CODE = 299
+
+var ErrStatusCode = errors.New("HTTP Error")
 
 // GetAmbariAlert calls the Ambari API to retrieve all alerts of a Hadoop cluster
 func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, err error) {
@@ -45,7 +48,7 @@ func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, er
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= ERROR_STATUS_CODE {
-		return nil, errors.New(resp.Status)
+		return nil, httpError(resp.Status)
 	}
 
 	//read body
@@ -65,4 +68,8 @@ func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, er
 
 	alert = responseAlert.Items
 	return
+}
+
+func httpError(statusCode string) error {
+	return fmt.Errorf("OperationUnknown %w : %s", ErrStatusCode, statusCode)
 }
