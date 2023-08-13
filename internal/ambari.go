@@ -13,25 +13,26 @@ import (
 	"github.com/davidaparicio/ambari-to-opsgenie/util"
 )
 
+const ERROR_STATUS_CODE = 299
+
 // GetAmbariAlert calls the Ambari API to retrieve all alerts of a Hadoop cluster
 func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, err error) {
-
-	u, err := url.Parse(c.V.GetString("ambari.url_unencrypted"))
+	url, err := url.Parse(c.V.GetString("ambari.url_unencrypted"))
 	if err != nil {
 		c.L.WithError(err).Error("parsing url")
-		return
+		return nil, err
 	}
 
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{ServerName: u.Host, MinVersion: tls.VersionTLS12},
+			TLSClientConfig: &tls.Config{ServerName: url.Host, MinVersion: tls.VersionTLS12},
 		},
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.V.GetString("ambari.url_unencrypted"), nil)
 	if err != nil {
 		c.L.WithError(err).Error("creating the HTTP NewRequest")
-		return
+		return nil, err
 	}
 
 	req.SetBasicAuth(c.V.GetString("ambari.username_unencrypted"), c.V.GetString("ambari.password"))
@@ -39,20 +40,19 @@ func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, er
 	resp, err := client.Do(req)
 	if err != nil {
 		c.L.WithError(err).Error("sending the HTTP request")
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 299 {
-		err = errors.New(resp.Status)
-		return
+	if resp.StatusCode >= ERROR_STATUS_CODE {
+		return nil, errors.New(resp.Status)
 	}
 
 	//read body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.L.WithError(err).Error("reading the HTTP body")
-		return
+		return nil, err
 	}
 
 	responseAlert := types.ResponseAlert{}
@@ -60,7 +60,7 @@ func GetAmbariAlert(ctx context.Context, c *util.Config) (alert []types.Item, er
 	err = json.Unmarshal(body, &responseAlert)
 	if err != nil {
 		c.L.WithError(err).Error("unmarshaling the JSON body")
-		return
+		return nil, err
 	}
 
 	alert = responseAlert.Items

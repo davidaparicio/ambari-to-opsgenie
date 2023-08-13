@@ -13,7 +13,6 @@ import (
 // SendHearbeat sends a heartbeat every x minutes.
 // First you need to create a hearbeat in opsgenie and must be enabled
 func SendHearbeat(ctx context.Context, c *util.Config) {
-
 	HeartbeatClient, err := heartbeat.NewClient(&client.Config{
 		ApiKey:         c.V.GetString("opsgenie.key"),
 		OpsGenieAPIURL: client.API_URL_EU,
@@ -34,7 +33,9 @@ func SendHearbeat(ctx context.Context, c *util.Config) {
 			return
 		case <-ticker.C:
 			c.L.Debug("sending Ping...")
-			pingResult, err := HeartbeatClient.Ping(context.Background(), c.V.GetString("opsgenie.heartbeat.name_unencrypted"))
+			ctx, cancelled := context.WithCancel(ctx)
+			defer cancelled()
+			pingResult, err := HeartbeatClient.Ping(ctx, c.V.GetString("opsgenie.heartbeat.name_unencrypted"))
 			if err != nil {
 				c.L.WithError(err).Error("Fail to ping")
 				continue

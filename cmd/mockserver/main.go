@@ -11,9 +11,13 @@ import (
 )
 
 const (
-	CONTENT_TYPE = "Content-Type"
-	APPLICA_JSON = "application/json"
-	JSON_PATH    = "api/examples/"
+	CONTENT_TYPE      = "Content-Type"
+	APPLICA_JSON      = "application/json"
+	JSON_PATH         = "api/examples/"
+	READTIMEOUT       = 1
+	WRITETIMEOUT      = 1
+	IDLETIMEOUT       = 30
+	READHEADERTIMEOUT = 2
 )
 
 var l *logrus.Logger
@@ -61,18 +65,18 @@ func main() {
 	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
 	l.SetLevel(logrus.DebugLevel)
 
-	r.Handle("/200", jsonHandler(200, "200"))
-	r.Handle("/200/critical", jsonHandler(200, "200_critical"))
-	r.Handle("/200/warning", jsonHandler(200, "200_warning"))
-	r.Handle("/403", jsonHandler(403, "403"))
-	r.Handle("/500", jsonHandler(500, "500"))
+	r.Handle("/200", jsonHandler(http.StatusOK, "200"))
+	r.Handle("/200/critical", jsonHandler(http.StatusOK, "200_critical"))
+	r.Handle("/200/warning", jsonHandler(http.StatusOK, "200_warning"))
+	r.Handle("/403", jsonHandler(http.StatusForbidden, "403"))
+	r.Handle("/500", jsonHandler(http.StatusInternalServerError, "500"))
 
 	srv := &http.Server{
 		Addr:              ":1337",
-		ReadTimeout:       1 * time.Second,
-		WriteTimeout:      1 * time.Second,
-		IdleTimeout:       30 * time.Second,
-		ReadHeaderTimeout: 2 * time.Second,
+		ReadTimeout:       READTIMEOUT * time.Second,
+		WriteTimeout:      WRITETIMEOUT * time.Second,
+		IdleTimeout:       IDLETIMEOUT * time.Second,
+		ReadHeaderTimeout: READHEADERTIMEOUT * time.Second,
 		Handler:           r,
 		//TLSConfig: tlsConfig,
 	}

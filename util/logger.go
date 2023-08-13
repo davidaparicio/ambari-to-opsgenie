@@ -3,7 +3,7 @@ package util
 import "github.com/sirupsen/logrus"
 
 // ConfigLogger configures the Logrus logger (timestamp+loglevel).
-func (c *Config) ConfigLogger() (err error) {
+func (c *Config) ConfigLogger() {
 	c.L = logrus.New()
 	// To get a timestamp format like DEBU[2022-01-11T23:15:56+01:00] Debug message
 	c.L.SetFormatter(&logrus.TextFormatter{
@@ -14,5 +14,4 @@ func (c *Config) ConfigLogger() (err error) {
 	})
 	//Set logrus show line number
 	//c.L.SetReportCaller(true)
-	return
 }

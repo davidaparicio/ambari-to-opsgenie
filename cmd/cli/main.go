@@ -13,7 +13,6 @@ import (
 
 const (
 	EXIT_NOCONF_FILE = iota + 1
-	//EXIT_UNKNOWN_ERR
 )
 
 func main() {
@@ -58,7 +57,7 @@ func main() {
 
 			if err != nil {
 				c.L.WithError(err).Error("Fail to get Alert")
-				continue
+				continue //skipping for this time (no error handling/no retry)
 			}
 
 			for _, item := range items {
@@ -71,7 +70,7 @@ func main() {
 						continue
 					} else {
 						//Closing the Opsgenie alert, because it's fixed
-						if err = internal.CloseAlert(item.Alert, c); err != nil {
+						if err = internal.CloseAlert(item.Alert, c, ctx); err != nil {
 							c.L.WithError(err).Error("Fail to close Alert")
 						}
 					}
@@ -79,12 +78,12 @@ func main() {
 
 				//item.Alert.State == "CRITICAL" or "WARNING"
 				if opgenieID == "" {
-					if err = internal.CreateAlert(item.Alert, c); err != nil {
+					if err = internal.CreateAlert(item.Alert, c, ctx); err != nil {
 						c.L.WithError(err).Error("Fail to send Alert")
 					}
 				} else {
 					//Update the Opsgenie alert with a comment
-					if err = internal.CommentAlert(item.Alert, c); err != nil {
+					if err = internal.CommentAlert(item.Alert, c, ctx); err != nil {
 						c.L.WithError(err).Error("Fail to comment Alert")
 					}
 				}

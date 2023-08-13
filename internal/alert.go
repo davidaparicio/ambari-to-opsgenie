@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/davidaparicio/ambari-to-opsgenie/api/types"
@@ -10,8 +11,10 @@ import (
 )
 
 // CommentAlert comments an Opsgenie alert, using the Opsgenie Go SDK.
-func CommentAlert(ambariAlert types.Alert, c *util.Config) (err error) {
-	commentResult, err := c.AlertClient.AddNote(context.Background(), &alert.AddNoteRequest{
+func CommentAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (err error) {
+	ctx, cancelled := context.WithCancel(ctx)
+	defer cancelled()
+	commentResult, err := c.AlertClient.AddNote(ctx, &alert.AddNoteRequest{
 		IdentifierType:  alert.ALERTID,
 		IdentifierValue: c.AmbariOpgenieMapping[ambariAlert.Id],
 		Note:            ambariAlert.Text,
@@ -19,47 +22,50 @@ func CommentAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 
 	if err != nil {
 		c.L.WithError(err).Error("Fail to comment Alert")
-		return
+		return err
 	}
 
-	status, err := commentResult.RetrieveStatus(context.Background())
+	status, err := commentResult.RetrieveStatus(ctx)
 
 	if !status.IsSuccess {
 		c.L.Debug(status.Status)
-		return
+		return err
 	}
 
-	return
+	return nil
 }
 
 // CloseAlert closes an Opsgenie alert and remove it from the AmbariOpgenieMapping map.
-func CloseAlert(ambariAlert types.Alert, c *util.Config) (err error) {
-	closeResult, err := c.AlertClient.Close(context.Background(), &alert.CloseAlertRequest{
+func CloseAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (err error) {
+	ctx, cancelled := context.WithCancel(ctx)
+	defer cancelled()
+	closeResult, err := c.AlertClient.Close(ctx, &alert.CloseAlertRequest{
 		IdentifierType:  alert.ALERTID,
 		IdentifierValue: c.AmbariOpgenieMapping[ambariAlert.Id],
 	})
 
 	if err != nil {
 		c.L.WithError(err).Error("Fail to Close Alert")
-		return
+		return err
 	}
 
-	status, err := closeResult.RetrieveStatus(context.Background())
+	status, err := closeResult.RetrieveStatus(ctx)
 
 	if !status.IsSuccess {
 		c.L.Debug(status.Status)
 		if status.Status != "Alert is already closed." {
-			return
+			c.L.WithError(err).Error("Fail to close a closed alert ;)")
+			return err
 		}
 	}
 
 	delete(c.AmbariOpgenieMapping, ambariAlert.Id)
 
-	return
+	return nil
 }
 
 // CreateAlert creates a new Opsgenie alert and save it into the AmbariOpgenieMapping map.
-func CreateAlert(ambariAlert types.Alert, c *util.Config) (err error) {
+func CreateAlert(ambariAlert types.Alert, c *util.Config, ctx context.Context) (err error) {
 
 	var priority alert.Priority
 	switch ambariAlert.State {
@@ -67,11 +73,15 @@ func CreateAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 		priority = alert.P5
 	case "CRITICAL":
 		priority = alert.P3
+	case "OK":
+		return errors.New("can't create an Opsgenie alert for OK status")
 	default:
-		return
+		return errors.New("can't create an Opsgenie alert for an unknown status")
 	}
 
-	createResult, err := c.AlertClient.Create(context.Background(), &alert.CreateAlertRequest{
+	ctx, cancelled := context.WithCancel(ctx)
+	defer cancelled()
+	createResult, err := c.AlertClient.Create(ctx, &alert.CreateAlertRequest{
 		Message:     ambariAlert.Label,
 		Description: ambariAlert.Text,
 		Entity:      ambariAlert.ServiceName,
@@ -87,18 +97,17 @@ func CreateAlert(ambariAlert types.Alert, c *util.Config) (err error) {
 
 	if err != nil {
 		c.L.WithError(err).Error("Fail to Create Alert")
-		return
+		return err
 	}
 
-	createStatus, err := createResult.RetrieveStatus(context.Background())
+	createStatus, err := createResult.RetrieveStatus(ctx)
 
 	if !createStatus.IsSuccess {
 		c.L.Debug(createStatus.Status)
-		return
+		return err
 	}
 
 	c.AmbariOpgenieMapping[ambariAlert.Id] = createStatus.AlertID
 
-	return
-
+	return nil
 }

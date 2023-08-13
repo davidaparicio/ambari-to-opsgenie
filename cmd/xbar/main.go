@@ -13,7 +13,6 @@ import (
 
 const (
 	EXIT_NOCONF_FILE = iota + 1
-	//EXIT_UNKNOWN_ERR
 )
 
 var c *util.Config
@@ -28,7 +27,7 @@ func main() {
 		os.Exit(EXIT_NOCONF_FILE)
 	}
 
-	c.L.Debug(internal.CurrentVersion())
+	c.L.Debugf("xbar/Ambari-to-Opsgenie %s", internal.Version)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
