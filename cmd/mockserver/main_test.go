@@ -14,13 +14,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type testCase struct {
+	name             string
+	method           string
+	url              string //not useful for TestJsonHandler
+	statusExpected   int
+	containsExpected string
+}
+
 func init() {
 	// Initialize the logrus logger for the server
 	l = logrus.New()
 	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
 	l.SetLevel(logrus.ErrorLevel) //l.SetLevel(logrus.DebugLevel)
 
-	// Go to the root project directory, in order to reach /api/examples/*
+	// Move to the root project directory to reach ./api/examples/*
 	// https://brandur.org/fragments/test-go-project-root
 	_, filename, _, _ := runtime.Caller(0)
 	dir := path.Join(path.Dir(filename), "../..")
@@ -31,13 +39,7 @@ func init() {
 }
 
 func TestJsonHandler(t *testing.T) {
-	tt := []struct {
-		name             string
-		method           string
-		url              string //not used
-		statusExpected   int
-		containsExpected string
-	}{
+	tt := []testCase{
 		{"200 OK", http.MethodGet, "200", http.StatusOK, "OK"},
 		{"200 Critical", http.MethodGet, "200_critical", http.StatusOK, "CRITICAL"},
 		{"200 Warning", http.MethodGet, "200_warning", http.StatusOK, "WARNING"},
@@ -56,7 +58,7 @@ func TestJsonHandler(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest(tc.method, "Not used/jsonHandler called directly, testRouting will test URLs", nil)
+			req, err := http.NewRequest(tc.method, "not used/jsonHandler called directly, testRouting will test URLs", nil)
 			if err != nil {
 				t.Fatalf("could not created request: %v", err)
 			}
@@ -67,31 +69,14 @@ func TestJsonHandler(t *testing.T) {
 
 			res := rec.Result()
 			defer res.Body.Close()
-			if res.StatusCode != tc.statusExpected {
-				t.Errorf("expected status %v; got %v", tc.statusExpected, res.StatusCode)
-			}
 
-			b, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatalf("could not read response: %v", err)
-			}
-
-			if !strings.Contains(string(b), tc.containsExpected) {
-				t.Fatalf("doesn't contain this sentence: %s", tc.containsExpected)
-			}
+			tc.verify(t, res)
 		})
 	}
 }
 
 func TestRouting(t *testing.T) {
-
-	tt := []struct {
-		name             string
-		method           string
-		url              string
-		statusExpected   int
-		containsExpected string
-	}{
+	tt := []testCase{
 		{"200 OK", http.MethodGet, "200", http.StatusOK, "OK"},
 		{"200 Critical", http.MethodGet, "200/critical", http.StatusOK, "CRITICAL"},
 		{"200 Warning", http.MethodGet, "200/warning", http.StatusOK, "WARNING"},
@@ -106,32 +91,16 @@ func TestRouting(t *testing.T) {
 			defer srv.Close()
 
 			res, err := http.Get(fmt.Sprintf("%s/%s", srv.URL, tc.url))
-
-			//t.Logf("%s/%s", srv.URL, tc.url)
-
 			if err != nil {
 				t.Fatalf("could not GET request: %v", err)
 			}
-
-			if res.StatusCode != tc.statusExpected {
-				t.Errorf("expected status %v; got %v", tc.statusExpected, res.StatusCode)
-			}
-
-			b, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Fatalf("could not read response: %v", err)
-			}
-
-			if !strings.Contains(string(b), tc.containsExpected) {
-				t.Fatalf("doesn't contain this sentence: %s", tc.containsExpected)
-			}
-
-			//tc.Verify(res * http.Response)
+			//t.Logf("%s/%s", srv.URL, tc.url)
+			tc.verify(t, res)
 		})
 	}
 }
 
-/*func (tc *testing.T) Verify() {
+func (tc testCase) verify(t *testing.T, res *http.Response) {
 	if res.StatusCode != tc.statusExpected {
 		t.Errorf("expected status %v; got %v", tc.statusExpected, res.StatusCode)
 	}
@@ -144,4 +113,4 @@ func TestRouting(t *testing.T) {
 	if !strings.Contains(string(b), tc.containsExpected) {
 		t.Fatalf("doesn't contain this sentence: %s", tc.containsExpected)
 	}
-}*/
+}
