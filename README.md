@@ -1,7 +1,7 @@
 # Ambari to Opsgenie
 
 <p align="center">
-<img src="assets/img/a2o.logo.png" alt="Ambari-to-Opsgenie logo" title="Ambari-to-Opsgenie logo" />
+<img src="assets/img/a2o_logo.jpg" alt="Ambari-to-Opsgenie logo" title="Ambari-to-Opsgenie logo" />
 </p>
 
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://pkg.go.dev/github.com/davidaparicio/ambari-to-opsgenie)
