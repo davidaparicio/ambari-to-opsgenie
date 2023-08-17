@@ -35,7 +35,12 @@ func jsonHandler(statusCode int, filePath string) Handler {
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	l.Debugf("%s called by %s", h.FilePath, r.Host)
+	l.Debugf("%s/%s called by %s", r.Method, h.FilePath, r.Host)
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
 	jsonFile, err := os.Open(JSON_PATH + h.FilePath + ".json")
 
 	if err != nil {
@@ -59,17 +64,20 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
+func handler() http.Handler {
 	r := http.NewServeMux()
-	l = logrus.New()
-	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
-	l.SetLevel(logrus.DebugLevel)
-
 	r.Handle("/200", jsonHandler(http.StatusOK, "200"))
 	r.Handle("/200/critical", jsonHandler(http.StatusOK, "200_critical"))
 	r.Handle("/200/warning", jsonHandler(http.StatusOK, "200_warning"))
 	r.Handle("/403", jsonHandler(http.StatusForbidden, "403"))
 	r.Handle("/500", jsonHandler(http.StatusInternalServerError, "500"))
+	return r
+}
+
+func main() {
+	l = logrus.New()
+	l.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02T15:04:05-07:00", FullTimestamp: true})
+	l.SetLevel(logrus.DebugLevel)
 
 	srv := &http.Server{
 		Addr:              ":1337",
@@ -77,7 +85,7 @@ func main() {
 		WriteTimeout:      WRITETIMEOUT * time.Second,
 		IdleTimeout:       IDLETIMEOUT * time.Second,
 		ReadHeaderTimeout: READHEADERTIMEOUT * time.Second,
-		Handler:           r,
+		Handler:           handler(),
 		//TLSConfig: tlsConfig,
 	}
 
