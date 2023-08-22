@@ -1,6 +1,6 @@
 module github.com/davidaparicio/ambari-to-opsgenie
 
-go 1.17
+go 1.21
 
 require (
 	github.com/opsgenie/opsgenie-go-sdk-v2 v1.2.20
