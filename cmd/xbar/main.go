@@ -68,6 +68,7 @@ func getNumbers(ctx context.Context, c *util.Config) (nbCritical, nbWarning int)
 	items, err := internal.GetAmbariAlert(ctx, c)
 	if err != nil {
 		c.L.WithError(err).Error("Fail to get Alert")
+		nbCritical, nbWarning = -1, -1
 	}
 	for _, item := range items {
 		if item.Alert.State == "WARNING" {
@@ -81,7 +82,7 @@ func getNumbers(ctx context.Context, c *util.Config) (nbCritical, nbWarning int)
 }
 
 func notifyBlinky(ctx context.Context, nbCritical, nbWarning int) {
-	if nbCritical != 0 {
+	if nbCritical > 0 {
 		resp, err := httpGetWithContext(ctx, "https://app.getblinky.io/api/v1/ingest/webhook/5b0adf41-a91a-4e96-9265-f4081e0c30f4")
 		if err != nil {
 			c.L.WithError(err).Error("Fail to call Blinky critical webhook")
@@ -89,12 +90,20 @@ func notifyBlinky(ctx context.Context, nbCritical, nbWarning int) {
 			c.L.Info("Blinky webhook critical called\n")
 			c.L.Infof("status code: %d\n", resp.StatusCode)
 		}
-	} else if nbWarning != 0 {
+	} else if nbWarning > 0 {
 		resp, err := httpGetWithContext(ctx, "https://app.getblinky.io/api/v1/ingest/webhook/c919e0fa-cbf2-4948-a111-a5dee3192d19")
 		if err != nil {
 			c.L.WithError(err).Error("Fail to call Blinky warning webhook")
 		} else {
 			c.L.Info("Blinky webhook warning called\n")
+			c.L.Infof("status code: %d\n", resp.StatusCode)
+		}
+	} else if nbCritical == -1 || nbWarning == -1 {
+		resp, err := httpGetWithContext(ctx, "https://app.getblinky.io/api/v1/ingest/webhook/e78e3f60-c235-455b-842d-308a388ff6b4")
+		if err != nil {
+			c.L.WithError(err).Error("Fail to call Blinky noConnection webhook")
+		} else {
+			c.L.Info("Blinky webhook noConnection called\n")
 			c.L.Infof("status code: %d\n", resp.StatusCode)
 		}
 	}
