@@ -11,7 +11,7 @@
 [![Froggit](https://img.shields.io/static/v1?label=froggit&logo=froggit&color=red&message=no&style=flat-square)](https://lab.frogg.it/davidaparicio/ambari-to-opsgenie)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/davidaparicio/ambari-to-opsgenie/blob/main/LICENSE.md)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdavidaparicio%2Fambari-to-opsgenie.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdavidaparicio%2Fambari-to-opsgenie?ref=badge_shield)
-[![Maintenance](https://img.shields.io/maintenance/yes/2023.svg)]()
+[![Maintenance](https://img.shields.io/maintenance/yes/2024.svg)]()
 [![Twitter](https://img.shields.io/twitter/follow/dadideo.svg?style=social)](https://twitter.com/intent/follow?screen_name=dadideo)
 
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=davidaparicio_ambari-to-opsgenie&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=davidaparicio_ambari-to-opsgenie)
@@ -24,6 +24,7 @@ Some extensions have been added like [Blinky](https://getblinky.io/) or [xbar](h
 ## Installation
 
 ```bash
+brew install sops age && mkdir secrets
 age-keygen -o secrets/age.key > secrets/public_age.key 2>&1
 ```
 
